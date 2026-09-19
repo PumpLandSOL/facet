@@ -86,13 +86,13 @@ facetonrh.xyz
 
 **6 · vs Prism · attach facet-vs-prism.png**
 ```
-Prism compares two wrappers. You pick the pair.
+Prism compares two wrappers, and you pick the pair.
 
 FACET ranks them all.
 
-111 assets are sold by rival issuers. NVDA alone has 5. Same share, different price, different grade.
+111 assets are sold by rival issuers. NVDA alone has 5. Same share, different price.
 
-Best Wrapper lines up all 361 and names the better buy.
+Best Wrapper names the better buy.
 
 facetonrh.xyz/wrappers
 CA: PASTE_CA_HERE
