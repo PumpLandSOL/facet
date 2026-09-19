@@ -76,7 +76,7 @@ async function pollCatalogue() {
         ch7: c.price_change_percentage_7d_in_currency ?? null, ch30: c.price_change_percentage_30d_in_currency ?? null, supply: c.circulating_supply || c.total_supply || 0,
         ath: c.ath, athDate: c.ath_date, atlDate: c.atl_date, seen: now(), firstSeen: prev.firstSeen || now() }); n++;
     }
-    db.updated = now(); regrade(); dirty(); console.log('catalogue', cat, 'p' + page, '+' + n, 'total', Object.keys(db.assets).length);
+    db.updated = now(); regrade(); buildWrappers(); dirty(); console.log('catalogue', cat, 'p' + page, '+' + n, 'total', Object.keys(db.assets).length);
   } catch (e) { console.log('catalogue', cat, String(e.message || e)); }
 }
 
@@ -135,6 +135,41 @@ async function chart(id, days) { const k = id + ':' + days; const c = db.charts[
 async function kyber(chain, pathq, body) { const ac = new AbortController(); const tm = setTimeout(() => ac.abort(), 15000); const r = await fetch('https://aggregator-api.kyberswap.com/' + chain + pathq, { method: body ? 'POST' : 'GET', headers: { 'x-client-id': 'facet', 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined, signal: ac.signal }); clearTimeout(tm); const j = await r.json(); if (j.code !== 0) throw new Error(j.message || 'no route'); return j.data; }
 const feeQ = () => (FEE_RECEIVER && FEE_BPS > 0 ? '&feeAmount=' + FEE_BPS + '&isInBps=true&chargeFeeBy=currency_in&feeReceiver=' + FEE_RECEIVER : '');
 
+// ---------- Best Wrapper: every token of the same underlying, found automatically and ranked ----------
+// The underlying ticker is derived from each issuer's own symbol convention. Gold-ounce tokens form one more group.
+function underlyingOf(a) {
+  const s = a.symbol, n = a.name;
+  if (a.cls === 'metals') return GOLD_OZ && /gold/i.test(n) && Math.abs(a.price / GOLD_OZ - 1) < 0.04 ? 'GOLD' : null;
+  if (a.cls !== 'stocks' && a.cls !== 'etfs') return null;
+  if (/xstock/i.test(n)) return s.replace(/X$/, ''); if (/ondo/i.test(n)) return s.replace(/ON$/, ''); if (/bstock/i.test(n)) return s.replace(/B$/, '');
+  if (/rstock/i.test(n)) return s.replace(/^R/, ''); if (/robinhood token|backpack securities/i.test(n)) return s; return null;
+}
+const REF = {};   // real share prices from the exchange tape (Yahoo), only used while fresh
+let WRAP = { ts: 0, groups: [], by: {} };
+function buildWrappers() {
+  const g = {}; for (const a of live()) { const u = underlyingOf(a); if (!u) continue; (g[u] = g[u] || []).push(a); }
+  const groups = [];
+  for (const [ticker, arr] of Object.entries(g)) {
+    if (arr.length < 2) continue; const prices = arr.map((x) => x.price).sort((x, y) => x - y); const med = prices[Math.floor(prices.length / 2)];
+    const ok = arr.filter((x) => Math.abs(x.price / med - 1) < 0.08); if (ok.length < 2) continue;      // drop tokens that are not 1:1 with the rest
+    const cheapest = Math.min(...ok.map((x) => x.price));
+    const rows = ok.map((x) => { const over = r2((x.price / cheapest - 1) * 100); const liquid = x.vol >= 10000; const value = r2((x.grade ? x.grade.score : 0) - 12 * over - (liquid ? 0 : 15)); return Object.assign(lite(x), { over, liquid, value }); }).sort((x, y) => y.value - x.value);
+    const ref = REF[ticker] && now() - REF[ticker].ts < 20 * 60000 ? REF[ticker] : null;
+    if (ref) for (const r of rows) r.vsShare = r2((r.price / ref.px - 1) * 100);
+    const name = ticker === 'GOLD' ? 'One troy ounce of gold' : rows[0].name.replace(/\s*(xStock|rStock|\([^)]*\)|• Robinhood Token)\s*/gi, ' ').trim();
+    groups.push({ ticker, name, n: rows.length, spread: r2((Math.max(...ok.map((x) => x.price)) / cheapest - 1) * 100), cheapest, best: rows[0].id, bestSymbol: rows[0].symbol, mcap: ok.reduce((t, x) => t + x.mcap, 0), vol: ok.reduce((t, x) => t + x.vol, 0), ref: ref ? { px: ref.px, exch: ref.exch, ts: ref.ts } : null, rows });
+  }
+  groups.sort((x, y) => (y.n - x.n) || (y.vol - x.vol)); const by = {}; for (const G of groups) { by[G.ticker] = G; for (const r of G.rows) by['id:' + r.id] = G; }
+  WRAP = { ts: now(), groups, by };
+}
+let refI = 0;
+async function pollRef() {
+  const list = WRAP.groups.filter((G) => G.ticker !== 'GOLD'); if (!list.length) return; const G = list[refI++ % list.length];
+  try { const ac = new AbortController(); const tm = setTimeout(() => ac.abort(), 8000); const r = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(G.ticker) + '?range=1d&interval=1m&includePrePost=true', { headers: { accept: 'application/json', 'user-agent': 'Mozilla/5.0' }, signal: ac.signal }); clearTimeout(tm);
+    const res = (await r.json()).chart.result[0]; const closes = ((res.indicators.quote[0] || {}).close || []); const tsArr = res.timestamp || []; let k = closes.length - 1; while (k >= 0 && closes[k] == null) k--;
+    if (k >= 0 && Math.abs(closes[k] / G.cheapest - 1) < 0.15) REF[G.ticker] = { px: +closes[k].toFixed(4), ts: tsArr[k] * 1000, exch: res.meta.exchangeName || 'exchange' }; } catch (e) {}
+}
+
 // ---------- projections ----------
 const lite = (a) => ({ id: a.id, symbol: a.symbol, name: a.name, image: a.image, cls: a.cls, issuer: a.issuer, price: a.price, mcap: a.mcap, vol: a.vol, ch24: a.ch24, ch7: a.ch7, ch30: a.ch30, score: a.grade ? a.grade.score : 0, letter: a.grade ? a.grade.letter : 'C' });
 const live = () => Object.values(db.assets).filter((a) => now() - (a.seen || 0) < 3 * 86400000);
@@ -158,11 +193,13 @@ const server = http.createServer(async (req, res) => {
     }
     if (p === '/api/home') { const L = live(); const top = (cls, n, f) => L.filter((a) => cls.includes(a.cls)).sort(f || ((x, y) => y.mcap - x.mcap)).slice(0, n).map(lite);
       return json(res, 200, { stats: stats(), shelves: [{ key: 'treasuries', title: 'Treasuries & cash', note: 'Government paper and money funds, on-chain', items: top(['treasuries'], 8) }, { key: 'metals', title: 'Gold & metals', note: 'Vaulted bullion you can hold in a wallet', items: top(['metals'], 8) }, { key: 'stocks', title: 'Stocks', note: 'Share-backed tokens, ranked by size', items: top(['stocks'], 8) }, { key: 'etfs', title: 'ETFs & indices', note: 'Whole markets in one token', items: top(['etfs'], 8) }, { key: 'credit', title: 'Private credit', note: 'Loan books and structured credit', items: top(['credit'], 8) }],
-        movers: L.filter((a) => a.ch30 != null && a.mcap > 1e7 && a.vol > 5e4 && Math.abs(a.ch30) < 300).sort((x, y) => Math.abs(y.ch30) - Math.abs(x.ch30)).slice(0, 8).map(lite), traded: L.slice().sort((x, y) => y.vol - x.vol).slice(0, 8).map(lite), finest: L.filter((a) => a.mcap > 1e7).sort((x, y) => (y.grade.score - x.grade.score) || (y.mcap - x.mcap)).slice(0, 8).map(lite) }); }
+        wrapStats: { groups: WRAP.groups.length, wrappers: WRAP.groups.reduce((t, G) => t + G.n, 0), widest: WRAP.groups.slice().filter((G) => G.vol > 50000).sort((x, y) => y.spread - x.spread).slice(0, 4) }, movers: L.filter((a) => a.ch30 != null && a.mcap > 1e7 && a.vol > 5e4 && Math.abs(a.ch30) < 300).sort((x, y) => Math.abs(y.ch30) - Math.abs(x.ch30)).slice(0, 8).map(lite), traded: L.slice().sort((x, y) => y.vol - x.vol).slice(0, 8).map(lite), finest: L.filter((a) => a.mcap > 1e7).sort((x, y) => (y.grade.score - x.grade.score) || (y.mcap - x.mcap)).slice(0, 8).map(lite) }); }
     if (p.startsWith('/api/asset/')) { const a = db.assets[decodeURIComponent(p.slice(11))]; if (!a) return json(res, 404, { error: 'no such listing' }); let d = db.details[a.id] || null; try { d = await detail(a.id); } catch (e) {} let s = db.supply[a.id] || null; if (d && !s) { try { s = await readSupply(a.id); } catch (e) {} }
       a.grade = gradeOf(a); const related = live().filter((x) => x.cls === a.cls && x.id !== a.id).sort((x, y) => y.mcap - x.mcap).slice(0, 6).map(lite);
-      return json(res, 200, { asset: Object.assign(lite(a), { supply: a.supply, ath: a.ath, athDate: a.athDate }), grade: a.grade, detail: d, supply: s, related, routable: d ? d.contracts.filter((c) => c.evm).map((c) => ({ chain: c.chain, chainName: c.chainName, chainId: CHAINS[c.chain].id, address: c.address, native: CHAINS[c.chain].native })) : [], solana: d ? (d.contracts.find((c) => c.chain === 'solana') || {}).address || null : null }); }
+      return json(res, 200, { asset: Object.assign(lite(a), { supply: a.supply, ath: a.ath, athDate: a.athDate }), grade: a.grade, detail: d, supply: s, related, wrappers: (WRAP.by['id:' + a.id] || null), routable: d ? d.contracts.filter((c) => c.evm).map((c) => ({ chain: c.chain, chainName: c.chainName, chainId: CHAINS[c.chain].id, address: c.address, native: CHAINS[c.chain].native })) : [], solana: d ? (d.contracts.find((c) => c.chain === 'solana') || {}).address || null : null }); }
     if (p.startsWith('/api/chart/')) { const id = decodeURIComponent(p.slice(11)); if (!db.assets[id]) return json(res, 404, { error: 'no such listing' }); const days = ['1', '7', '30', '90', '365'].includes(u.searchParams.get('days')) ? u.searchParams.get('days') : '30'; try { return json(res, 200, { pts: await chart(id, days) }); } catch (e) { return json(res, 200, { pts: [], error: 'chart feed busy, try again shortly' }); } }
+    if (p === '/api/wrappers') { if (now() - WRAP.ts > 60000) buildWrappers(); const q = (u.searchParams.get('q') || '').toUpperCase(); const L = q ? WRAP.groups.filter((G) => G.ticker.includes(q) || G.name.toUpperCase().includes(q)) : WRAP.groups; return json(res, 200, { total: L.length, wrappers: L.reduce((t, G) => t + G.n, 0), widest: WRAP.groups.slice().sort((x, y) => y.spread - x.spread).slice(0, 6).map((G) => ({ ticker: G.ticker, name: G.name, n: G.n, spread: G.spread, bestSymbol: G.bestSymbol })), groups: L.slice(0, 150) }); }
+    if (p.startsWith('/api/wrappers/')) { if (now() - WRAP.ts > 60000) buildWrappers(); const G = WRAP.by[decodeURIComponent(p.slice(14)).toUpperCase()]; return G ? json(res, 200, G) : json(res, 404, { error: 'no group for that ticker' }); }
     if (p === '/api/verify') { const a = find(u.searchParams.get('q')); if (!a) return json(res, 404, { error: 'nothing in the register matches that' }); try { await detail(a.id); await readSupply(a.id); } catch (e) {} a.grade = gradeOf(a); return json(res, 200, { asset: lite(a), grade: a.grade, supply: db.supply[a.id] || null }); }
     if (p === '/api/basket') { const ids = (u.searchParams.get('ids') || '').split(',').filter(Boolean).slice(0, 30); const ws = (u.searchParams.get('w') || '').split(',').map(Number); const rows = ids.map((id, i) => ({ a: db.assets[id], w: ws[i] > 0 ? ws[i] : 1 })).filter((x) => x.a); if (!rows.length) return json(res, 200, { items: [], score: 0, letter: '-' }); const tw = rows.reduce((t, x) => t + x.w, 0);
       const score = Math.round(rows.reduce((t, x) => t + x.a.grade.score * x.w, 0) / tw); const weakest = rows.slice().sort((x, y) => x.a.grade.score - y.a.grade.score)[0].a; const ch30 = rows.reduce((t, x) => t + (x.a.ch30 || 0) * x.w, 0) / tw; const mix = {}; for (const x of rows) mix[x.a.cls] = r2((mix[x.a.cls] || 0) + 100 * x.w / tw);
@@ -180,5 +217,5 @@ const server = http.createServer(async (req, res) => {
 });
 // background: read contracts and supply for the largest listings first, slowly, so grades are complete before anyone asks
 async function warm() { if (Q.length > 2) return; const next = live().filter((a) => !db.details[a.id] || now() - db.details[a.id].ts > 6 * 3600000).sort((x, y) => y.mcap - x.mcap)[0]; if (!next) return; try { await detail(next.id); await readSupply(next.id); } catch (e) {} }
-regrade(); pollCatalogue(); setInterval(pollCatalogue, 45000); setInterval(warm, 20000);
+regrade(); pollCatalogue(); setInterval(pollCatalogue, 45000); setInterval(warm, 20000); buildWrappers(); setInterval(pollRef, 2500);
 server.listen(PORT, () => console.log('FACET on :' + PORT + ' · ' + Object.keys(db.assets).length + ' listings cached · fee ' + (FEE_RECEIVER ? FEE_BPS + 'bps → ' + FEE_RECEIVER : 'off')));

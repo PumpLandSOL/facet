@@ -15,7 +15,7 @@ const CHROME = 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const SIZES = {
   'facet-pfp': [2000, 2000], 'facet-score': [2400, 1350], 'facet-market': [2400, 1350], 'facet-trade': [2400, 1350],
   'facet-banner': [3000, 1000],
-  'facet-keyart': [2400, 1350], 'facet-vs': [2400, 1350],
+  'facet-keyart': [2400, 1350], 'facet-vs': [2400, 1350], 'facet-bestwrapper': [2400, 1350], 'facet-vs-prism': [2400, 1350],
   'wage-howitworks': [2400, 1350],
 };
 

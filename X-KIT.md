@@ -12,6 +12,8 @@
 | the score | facet-score.png | 2400×1350 |
 | asset classes | facet-market.png | 2400×1350 |
 | verify + trade | facet-trade.png | 2400×1350 |
+| Best Wrapper feature | facet-bestwrapper.png | 2400×1350 |
+| FACET vs Prism | facet-vs-prism.png | 2400×1350 |
 | wrapper vs wrapper | facet-vs.png | 2400×1350 |
 
 Regenerate with the site running: `node _studio/build.js && node _studio/render.js`. Every number and listing in the kit is read live from the site at build time.
@@ -81,6 +83,32 @@ Oracle tokens and "RWA chains" don't make the shelf.
 $FACET · CA soon
 facetonrh.xyz
 ```
+
+**6 · vs Prism · attach facet-vs-prism.png**
+```
+Prism compares two wrappers. You pick the pair.
+
+FACET ranks them all.
+
+111 assets are sold by rival issuers. NVDA alone has 5. Same share, different price, different grade.
+
+Best Wrapper lines up all 361 and names the better buy.
+
+facetonrh.xyz/wrappers
+CA: PASTE_CA_HERE
+```
+
+**7 · Best Wrapper feature · attach facet-bestwrapper.png**
+```
+New on FACET: Best Wrapper.
+
+The same NVDA share is sold by 5 issuers. Right now the cheapest is also the best graded, and the dearest costs 0.25% more for the identical share.
+
+Every rival wrapper, ranked on price, grade and liquidity.
+
+facetonrh.xyz/wrappers
+```
+Rebuild both graphics on posting day so the numbers in the image and the tweet match: `node _studio/build-wrapper-kit.js && node _studio/render.js facet-bestwrapper && node _studio/render.js facet-vs-prism`. Use `TICKER=AMD` to feature another asset.
 
 **Reply under 1**
 ```
