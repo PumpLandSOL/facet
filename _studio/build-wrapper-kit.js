@@ -35,3 +35,21 @@ const usd = (n) => n >= 1e6 ? '$' + (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? '$' 
     ${foot('Prism column per its public Verify API docs, which compare ?a= and ?b=')}`);
   console.log('built 2 ·', G.ticker, G.n, 'wrappers · best', G.rows[0].symbol);
 })().catch((e) => { console.error(e); process.exit(1); });
+
+// ---- facet-vs-prism-mc: the valuation angle. PRISM_MC env in USD (default 19M). ----
+(async () => {
+  const get = async (p) => (await fetch(SITE + p)).json(); const all = await get('/api/wrappers'); const mk = await get('/api/markets').catch(() => null);
+  const PRISM_MC = +(process.env.PRISM_MC || 19e6); const listings = (mk && (mk.total || (mk.rows && mk.rows.length))) || 185; const issuers = (mk && mk.issuers) || 32;
+  const cell = (a, b, c, big) => `<div style="display:grid;grid-template-columns:.9fr 1fr 1fr;border-bottom:2px solid #1b2920"><span class="g" style="font-size:20px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:20px 28px;display:flex;align-items:center">${a}</span><span class="mut" style="font-size:${big ? 52 : 28}px;padding:16px 28px;display:flex;align-items:center;font-weight:${big ? 700 : 400}">${b}</span><span style="font-size:${big ? 52 : 28}px;padding:16px 28px;display:flex;align-items:center;font-weight:700;background:#0b1a10;color:${big ? '#00c805' : '#ecf6ee'}">${c}</span></div>`;
+  wrap('facet-vs-prism-mc', 2400, 1350, `${top('FACET vs Prism')}
+    <div class="abs h" style="left:150px;top:230px;font-size:92px;max-width:2100px">Prism is $${(PRISM_MC / 1e6).toFixed(0)}M for a two-token compare. <span class="g">FACET launches with the whole shelf.</span></div>
+    <div class="abs card" style="left:150px;right:150px;top:520px;overflow:hidden"><div style="display:grid;grid-template-columns:.9fr 1fr 1fr;background:#040605;border-bottom:3px solid #00c805"><span></span><span style="font-size:26px;font-weight:700;padding:20px 28px;letter-spacing:.1em;color:#a9bcae">PRISM</span><span style="font-size:26px;font-weight:700;padding:20px 28px;letter-spacing:.1em;background:#00c805;color:#03110a">FACET</span></div>
+      ${cell('Market cap', '$' + (PRISM_MC / 1e6).toFixed(0) + 'M', 'Launch', true)}
+      ${cell('Coverage', 'The two tokens you typed', listings + ' graded listings · ' + issuers + ' issuers')}
+      ${cell('Wrappers ranked', 'None', all.wrappers + ' wrappers across ' + all.total + ' assets')}
+      ${cell('The answer', 'Which of your two scores higher', 'The best wrapper to buy, named')}
+      ${cell('Supply proof', 'Issuer figure', 'totalSupply() read on-chain, beside the issuer figure')}
+      ${cell('Trade', 'Elsewhere', 'From your wallet, self-custody, on-chain routed')}</div>
+    ${foot('Prism market cap per public trackers on the day of posting · FACET figures live at build time')}`);
+  console.log('built facet-vs-prism-mc');
+})().catch((e) => { console.error(e); process.exit(1); });

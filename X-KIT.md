@@ -116,3 +116,15 @@ Grades are built from live market and on-chain data and refresh every few minute
 ```
 
 Voice: never "yield guaranteed", never "paper", "simulated" or "demo". Update the listing count and tracked value in tweet 1 from the live site on posting day.
+
+**8 · vs Prism, the valuation angle · attach facet-vs-prism-mc.png**
+```
+Prism is a $19M coin for comparing two tokens you pick yourself.
+
+FACET launches with the whole shelf: 185 graded listings, 362 wrappers ranked, supply read on-chain, swaps from your wallet.
+
+Same category. Bigger product. Day one.
+
+facetonrh.xyz
+```
+Set `PRISM_MC` when rebuilding if the cap moves: `PRISM_MC=22000000 node _studio/build-wrapper-kit.js && node _studio/render.js facet-vs-prism-mc`.
