@@ -1,0 +1,33 @@
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="_base.css">
+<style>body{width:1280px;height:720px}
+#stage{position:absolute;left:50px;top:30px;width:1180px;height:590px;overflow:hidden;border:1px solid #25382b;border-radius:14px;background:#060907}
+#stage img{position:absolute;left:0;top:0;width:1180px;height:705px;transform-origin:0 0}
+#cap{position:absolute;left:50px;right:50px;top:640px;display:flex;align-items:baseline;gap:18px}
+#n{font-family:'JetBrains Mono';font-size:13px;color:#6f8577;letter-spacing:.2em;white-space:nowrap}#ct{font-size:26px;font-weight:600}
+#prog{position:absolute;left:0;bottom:0;height:3px;background:#00c805}
+.full{position:absolute;inset:0;display:grid;place-items:center;text-align:center;background:#060907}
+.logo{display:flex;align-items:center;gap:18px;font-weight:700;font-size:80px;letter-spacing:-.02em;justify-content:center}.logo svg{width:80px}
+</style><body><div class="amb"></div><div class="grid"></div>
+<div id="stage"></div><div id="cap"><span id="n"></span><span id="ct"></span></div><div id="prog"></div>
+<div class="full" id="intro"><div><div class="logo"><svg viewBox="0 0 40 40"><polygon points="20,3 37,20 20,37 3,20" fill="#00c805"/><polygon points="20,3 37,20 20,20" fill="#19d81f"/><polygon points="20,20 20,37 3,20" fill="#0a3d1c"/></svg>facet</div><div style="margin-top:16px;font-size:22px;letter-spacing:.2em;color:#a9bcae">PRODUCT WALKTHROUGH · ROBINHOOD CHAIN</div></div></div>
+<div class="full" id="outro"><div><div style="font-size:44px;font-weight:700">Every listing graded. <span class="g">Supply read on-chain.</span></div><div style="margin-top:26px"><span class="pill">facetonrh.xyz</span><span style="margin-left:20px;font-size:22px;color:#6f8577">@FacetOnHood</span></div></div></div>
+<script>
+const $=(i)=>document.getElementById(i),cl=(x)=>Math.max(0,Math.min(1,x)),e=(x)=>{x=cl(x);return x*x*(3-2*x)};
+const S=[[1.6,'01-home','One marketplace for tokenized real-world assets',[1,.5,.5]],
+[3.6,'02-home-list','Treasuries, gold, ETFs, credit and stocks, each with a grade',[1.3,.5,.55]],
+[5.8,'03-markets','185 graded listings from 32 issuers, $46B tracked',[1.25,.5,.35]],
+[8,'04-markets-2','Price, grade, tracked value and volume, sorted your way',[1.3,.5,.55]],
+[10.2,'05-verify','Verify: grade any token, or set two wrappers side by side',[1.35,.35,.45]],
+[12.6,'06-verify-result','PAXG vs XAUT, signal by signal. XAUT stands up better by 3 points',[1.3,.5,.7]],
+[15.2,'07-wrappers','Best Wrapper: the same share from six issuers, the better buy named',[1.25,.5,.4]],
+[17.4,'09-docs','Every point explained in the docs, so you can re-measure it yourself',[1.2,.5,.3]],[19.4]];
+const END=19.4,DUR=21;
+S.slice(0,-1).forEach((s,i)=>{const im=new Image();im.src='../shots/'+s[1]+'.png';im.id='i'+i;$('stage').appendChild(im);});
+const tf=(z,p)=>{const s=1+(z[0]-1)*p;const fx=z[1]*1180,fy=z[2]*705;let x=590-fx*s,y=295-fy*s;x=Math.min(0,Math.max(1180-1180*s,x));y=Math.min(0,Math.max(590-705*s,y));return `translate(${x}px,${y}px) scale(${s})`;};
+window.__seek=(t)=>{
+  $('intro').style.opacity=1-e((t-1.2)/.4);$('outro').style.opacity=e((t-END)/.4);$('prog').style.width=(t/DUR*1280)+'px';
+  let k=0;for(let i=0;i<S.length-1;i++)if(t>=S[i][0])k=i;
+  S.slice(0,-1).forEach((s,i)=>{const im=$('i'+i);im.style.opacity=i<=k?e((t-s[0])/.35):0;im.style.zIndex=i;const len=S[i+1][0]-s[0];im.style.transform=tf(s[3],e((t-s[0]-.15)/(len*.55)));});
+  $('n').textContent=String(k+1).padStart(2,'0')+' / 08';$('ct').textContent=S[k][2];$('cap').style.opacity=e((t-S[k][0])/.3)*(t<END?1:0);
+};window.__ready=Promise.all([...document.images].map((i)=>i.decode().catch(()=>0)));window.__seek(0);
+</script>

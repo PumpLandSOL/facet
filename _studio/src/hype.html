@@ -1,0 +1,29 @@
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="_base.css">
+<style>body{width:1280px;height:720px}.c{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.h{font-weight:700;font-size:78px;line-height:1.05;letter-spacing:-.02em}
+#rows{position:absolute;left:150px;right:150px;top:110px}
+.r{display:grid;grid-template-columns:200px 1fr 120px 170px;align-items:center;gap:20px;padding:16px 0;border-bottom:1px solid #1b2920;font-size:26px;color:#a9bcae}
+.r b{color:#ecf6ee;font-weight:600}.gr{display:inline-block;padding:4px 14px;border-radius:8px;background:#0a3d1c;color:#00c805;font-family:'JetBrains Mono';font-weight:700;font-size:22px;text-align:center}
+.bar{height:10px;background:#131c16;border-radius:5px;overflow:hidden}.bar i{display:block;height:100%;background:#00c805;border-radius:5px}
+.big{font-family:'JetBrains Mono';font-weight:700;font-size:230px;line-height:1;color:#00c805}
+.logo{display:flex;align-items:center;gap:22px;font-weight:700;font-size:96px;letter-spacing:-.02em}
+.logo svg{width:96px}
+</style><body><div class="amb" id="amb"></div><div class="grid"></div>
+<div class="c" id="s1"><div class="h">Everyone sells you<br>tokenized <span class="g">gold.</span></div></div>
+<div class="c" id="s2"><div class="h">Which wrapper<br><span class="g">actually stands up?</span></div></div>
+<div id="s3"><div id="rows"></div></div>
+<div class="c" id="s4"><div><div class="big" id="pts">0</div><div style="font-size:34px;letter-spacing:.2em;color:#a9bcae;margin-top:8px">POINTS · SIX SIGNALS · ONE GRADE</div></div></div>
+<div class="c" id="s5"><div><div class="logo"><svg viewBox="0 0 40 40"><polygon points="20,3 37,20 20,37 3,20" fill="#00c805"/><polygon points="20,3 37,20 20,20" fill="#19d81f"/><polygon points="20,20 20,37 3,20" fill="#0a3d1c"/></svg>facet</div><div style="font-size:30px;color:#a9bcae;margin-top:18px;letter-spacing:.04em">The marketplace for tokenized real-world assets.</div><div style="margin-top:34px"><span class="pill">facetonrh.xyz</span><span style="margin-left:22px;font-size:22px;color:#6f8577;letter-spacing:.14em">ROBINHOOD CHAIN</span></div></div></div>
+<script>
+const $=(i)=>document.getElementById(i),cl=(x)=>Math.max(0,Math.min(1,x)),e=(x)=>1-Math.pow(1-cl(x),3),win=(t,a,b,f=.22)=>cl((t-a)/f)*cl((b-t)/f);
+const R=[['XAUT','Tether Gold','AAA',100],['PAXG','PAX Gold','AAA',97],['BUIDL','BlackRock USD Fund','AA',88],['USYC','Circle USYC','AA',86],['FIGR_HELOC','Figure Heloc','A',79],['EUTBL','Spiko T-Bills','A',74]];
+$('rows').innerHTML=R.map((r,i)=>`<div class="r" id="r${i}"><b>${r[0]}</b><span>${r[1]}<div class="bar" style="margin-top:8px"><i id="b${i}" style="width:0"></i></div></span><span class="gr">${r[2]}</span><b class="mono" id="p${i}" style="text-align:right">0 / 100</b></div>`).join('');
+window.__seek=(t)=>{
+  $('amb').style.transform=`rotate(${t*4}deg) scale(${1+t*.02})`;
+  $('s1').style.opacity=win(t,0,1.8);$('s1').firstElementChild.style.transform=`translateY(${(1-e(t/.6))*30}px)`;
+  $('s2').style.opacity=win(t,1.7,3.4);$('s2').firstElementChild.style.transform=`scale(${.94+e((t-1.7)/.7)*.06})`;
+  $('s3').style.opacity=win(t,3.3,6.6);R.forEach((r,i)=>{const p=e((t-3.6-i*.22)/.7);$('r'+i).style.opacity=p;$('r'+i).style.transform=`translateX(${(1-p)*-40}px)`;$('b'+i).style.width=(p*r[3])+'%';$('p'+i).textContent=Math.round(p*r[3])+' / 100';});
+  $('s4').style.opacity=win(t,6.5,8.2);$('pts').textContent=Math.round(e((t-6.6)/1)*100);
+  $('s5').style.opacity=e((t-8.1)/.5);$('s5').firstElementChild.style.transform=`scale(${.9+e((t-8.1)/.8)*.1})`;
+};window.__seek(0);
+</script>

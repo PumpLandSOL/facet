@@ -3,3 +3,5 @@ node_modules/
 _studio/out/
 _studio/*-frames/
 _studio/rec-profile-*/
+_studio/shots/
+_studio/frames-*/
