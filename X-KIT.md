@@ -67,7 +67,7 @@ Read the contract first.
 
 FACET calls totalSupply() on the token itself and sets it beside what the issuer publishes.
 
-Then swap from your own wallet. Routed across on-chain venues, signed by you, settled to your address. No accounts. No custody.
+Then swap from your own wallet: routed on-chain, signed by you, settled to your address. No accounts. No custody.
 
 facetonrh.xyz
 ```
@@ -102,7 +102,7 @@ CA: PASTE_CA_HERE
 ```
 New on FACET: Best Wrapper.
 
-The same NVDA share is sold by 5 issuers. Right now the cheapest is also the best graded, and the dearest costs 0.25% more for the identical share.
+The same NVDA share is sold by 5 issuers. Right now the cheapest is also the best graded; the dearest costs 0.25% more for the identical share.
 
 Every rival wrapper, ranked on price, grade and liquidity.
 
