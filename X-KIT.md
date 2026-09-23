@@ -1,6 +1,6 @@
 # FACET — X kit
 
-**Handle:** @FacetOnRH · x.com/FacetOnRH · **Site:** facetonrh.xyz · **Ticker:** $FACET · **Repo:** github.com/PumpLandSOL/facet
+**Handle:** @FacetOnHood · x.com/FacetOnHood · **Site:** facetonrh.xyz · **Ticker:** $FACET · **Repo:** github.com/PumpLandSOL/facet
 **Look:** Robinhood black and green storefront. #060907 background, #00c805 green, #0a3d1c dark green, Instrument Sans + JetBrains Mono, rounded cards, pill buttons.
 
 ## Assets (brand/)
