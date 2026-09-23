@@ -123,7 +123,7 @@ Prism is a $19M coin for comparing two tokens you pick yourself.
 
 FACET launches with the whole shelf: 185 graded listings, 362 wrappers ranked, supply read on-chain, swaps from your wallet.
 
-Same category. Bigger product. Day one.
+Same category. Bigger product. Day 1.
 
 facetonrh.xyz
 ```
